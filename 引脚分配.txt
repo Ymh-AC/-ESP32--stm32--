@@ -1,0 +1,32 @@
+1、MPU6050（I2C 陀螺仪加速度计）
+表格
+功能	引脚	说明
+I2C_SCL	GPIO21	时钟
+I2C_SDA	GPIO22	数据
+
+//用uart_num1 
+|UART1_TX|17|
+|UART1_RX|16|
+|LoRa_M0|4|OUT|
+|LoRa_M1|5|OUT|
+|LoRa_AUX|34|IN|
+
+|ESC1_PWM|13 | 电调 1 油门输出 |
+|ESC2_PWM|14 | 电调 2 油门输出 |
+|ESC1_PWM|18 | 电调 3 油门输出 |
+|ESC2_PWM|19 | 电调 4 油门输出 |
+
+|Pitch_PWM|27 | 俯仰舵机 |
+|Pitch_PWM|12 | 俯仰舵机 |
+
+|RollL_PWM| | 左横滚舵机 |25
+|RollR_PWM| | 右横滚舵机 |26
+
+|GPS_TX|23|ESP 发送→GPS RX|
+|GPS_RX|15|GPS TX→ESP 接收定位数据 |
+|GPS_PPS|35|GPS 秒脉冲输入，授时用 |
+
+0：油门
+3:  方向左摇杆 400-1200
+1：升降 350 -2918 mid :1633
+2: 左右舵机 300-2880           mid :1563
