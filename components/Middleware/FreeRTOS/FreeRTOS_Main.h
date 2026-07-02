@@ -6,19 +6,27 @@
 #include "driver/ledc.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include"Servo.h"
+#include"Motor.h"
+#include "filter.h"
+#include "DXLora.h"
+#include "IMU.h"
+#include "led.h"
+#include "Config.h"
+#include "Key.h"
+#include "Printf_Debug.h"
+#include "Receive_Data.h"
 
 
 
-void MOTOR_PWM(uint16_t throttle_pwm);
 
-void Servo_pitch_PWM(uint16_t pitch_PWM); 
+void Start_Task(void);
+void power_Task(void *arg);
+void LORA_Rx_Task(void *arg);
+void flight_Task(void *arg);
+void led_Task(void *arg);
+void Key_Task(void *arg);
 
-void Servo_roll_PWM(uint16_t roll_pwm);
 
-void RC_Task(void *arg);
-
-void Control_Task_IMU(void *arg);
-void Control_Task_Man(void *arg);
-void GPS_Task(void *arg);
 #endif
 

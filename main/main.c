@@ -14,33 +14,20 @@
 #include "Wireless.h"
 #include "filter.h"
 #include "GPS.h"
-#include "debug.h"
-extern volatile uint8_t buff[64];	
-extern volatile uint8_t buf_count;	
-extern volatile uint8_t rx_flag;
+#include "Printf_Debug.h"
+#include "Receive_Data.h"
 
 volatile uint16_t TxData[4];//发送值
 volatile uint16_t RxData[4];//接收值
-volatile uint16_t RxData_KEY[2];//接收按键值
 
 volatile uint16_t Last_RxData[4];//上传接受值
 #define ONENET_UPLOAD_TOPIC "$sys/0n7kH7J14x/ESP32/thing/property/post/json"
-
 
 extern int16_t gyro_offset_x ;
 extern int16_t gyro_offset_y ;
 extern int16_t gyro_offset_z ;
 
-// 定义结构体
-typedef struct {
-	uint8_t  header;    // 0xAA
-    uint16_t throttle;
-    uint16_t pitch;
-    uint16_t roll;
-    uint16_t yaw;
-    uint8_t key[2];     //模式选着key[0]（手动/自稳）和功能按键key[1]
-    uint8_t  checksum;   // 简单校验
-}__attribute__((packed))RC_Data_t;
+
  // 
 IMU_DATA IMU_Data;
 GPS_t gps_data;
@@ -73,49 +60,43 @@ void app_main(void)
     pt2FilterInit(&gyro_filter_pitch, 20.0f, LOOP_HZ);
     pt2FilterInit(&gyro_filter_roll,  20.0f, LOOP_HZ);
     
-    xTaskCreate(LORA_Rx_Task,"lora_rx",2048,NULL,5,NULL);
-    xTaskCreate(RC_Task,"RC",2048,NULL,4,NULL);
+    Start_Task();
     
-    //xTaskCreate(Control_Task_Man,"Control",2048,NULL,4,NULL);
-    xTaskCreate(Control_Task_IMU,"Control_IMU",2048,NULL,3,NULL);
-    
-    //xTaskCreate(GPS_Task,"GPS",2048,NULL,4,NULL);
-
-    // while(1){
-    //     BMI270_Get_Angle_Plus(&IMU_Data);
-    //     printf("Pitch: %f, Roll: %f, Yaw: %f\r\n",IMU_Data.pitch, IMU_Data.roll, IMU_Data.yaw);
-    // }
+    while(1){
+        
+    }
 }
 
-void rx_control(void)	
+void rx_control(uint8_t *Flag)	
 {
-    while (buf_count >= sizeof(RC_Data_t)) {
+    
+    // while (buf_count >= sizeof(RC_Data_t)) {
         
-        if (buff[0] == 0xAA) {
+    //     if (buff[0] == 0xAA) {
             
-            RC_Data_t *p = (RC_Data_t *)buff;    
+    //         RC_Data_t *p = (RC_Data_t *)buff;    
             
-            uint8_t sum = (p->throttle ^ p->pitch ^ p->roll ^ p->yaw^ p->key[0]^p->key[1]) & 0xFF;      
+    //         uint8_t sum = (p->throttle ^ p->pitch ^ p->roll ^ p->yaw^ p->shutdown^p->fix_hight) & 0xFF;      
             
-            if (sum == p->checksum) {  
+    //         if (sum == p->checksum) {  
                    
-                RxData[0] = p->throttle;      
-                RxData[1] = p->pitch;      
-                RxData[2] = p->roll;      
-                RxData[3] = p->yaw;    
-                RxData_KEY[0] = p->key[0];
-                RxData_KEY[1] = p->key[1];
+    //             RxData[0] = p->throttle;      
+    //             RxData[1] = p->pitch;      
+    //             RxData[2] = p->roll;      
+    //             RxData[3] = p->yaw;    
+    //             RxData_KEY[0] = p->shutdown;
+    //             RxData_KEY[1] = p->fix_hight;
                 
-                buf_count -= sizeof(RC_Data_t);
-                if (buf_count > 0) {
-                    memmove((void *)buff, (void *)(buff + sizeof(RC_Data_t)), buf_count);
-                }
-                continue; 
-            }
-        }
-        buf_count--;
-        if (buf_count > 0) {
-            memmove((void *)buff, (void *)(buff + 1), buf_count);
-        }
-    }
+    //             buf_count -= sizeof(RC_Data_t);
+    //             if (buf_count > 0) {
+    //                 memmove((void *)buff, (void *)(buff + sizeof(RC_Data_t)), buf_count);
+    //             }
+    //             continue; 
+    //         }
+    //     }
+    //     buf_count--;
+    //     if (buf_count > 0) {
+    //         memmove((void *)buff, (void *)(buff + 1), buf_count);
+    //     }
+    // }
 }

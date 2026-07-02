@@ -5,15 +5,17 @@ set(src_dirs
     DXLora
     Motor
     Servo
+    Key
     LED)
 
 set(include_dirs
     Wireless
     GPS
     IMU
-    Servo
     DXLora
     Motor
+    Key
+    Servo
     LED)
 
 set(requires
@@ -24,7 +26,7 @@ set(requires
     esp_netif
     mqtt
     log
-    
+    Middleware
 )
 
 idf_component_register(SRC_DIRS ${src_dirs} INCLUDE_DIRS ${include_dirs} REQUIRES ${requires})

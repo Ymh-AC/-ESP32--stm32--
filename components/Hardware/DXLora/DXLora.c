@@ -6,6 +6,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
+#include "Receive_Data.h"
 
 #define LORA_NUM        UART_NUM_1
 
@@ -20,7 +21,7 @@
 volatile uint8_t buff[RX_BUF_LEN];
 volatile uint8_t buf_count = 0;
 
-extern void rx_control(void);
+extern void rx_control(uint8_t *Flag);
 
 static QueueHandle_t uart_queue = NULL;
 
@@ -69,10 +70,10 @@ void LORA_SEND(uint8_t *data, uint16_t length)
     uart_write_bytes(LORA_NUM, (const char *)data, length);
 }
 
-void LORA_Rx_Task(void *pvParameters)
+uint8_t LORA_Task(void)
 {
+    uint8_t Flag = 1;//表示是否接收到数据 0接收到 1为收到
     uart_event_t event;
-
     int len;
 
     while (1) {
@@ -83,7 +84,7 @@ void LORA_Rx_Task(void *pvParameters)
                     if (len > 0) {  
                         
                         buf_count += len;
-                        rx_control();
+                        Receive_Data(&Flag);
                     }
                     break;
                 case UART_FIFO_OVF:
@@ -99,8 +100,8 @@ void LORA_Rx_Task(void *pvParameters)
         size_t buffered = 0;
         uart_get_buffered_data_len(LORA_NUM, &buffered);
         if (buffered == 0 && buf_count > 0) {
-            rx_control();
-            
+            Receive_Data(&Flag);
         }
     }
+    return Flag;
 }

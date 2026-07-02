@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tasklist)",
+      "Bash(find D:/Users/YMH/Desktop/ESP32四轴/esp32-quadcopter-drone/components -name *.c -o -name *.h)",
+      "Bash(find D:/Users/YMH/Desktop/ESP32四轴/esp32-quadcopter-drone -name *.c -o -name *.h)",
+      "Bash(wmic process:*)"
+    ]
+  }
+}
