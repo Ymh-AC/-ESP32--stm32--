@@ -30,4 +30,14 @@ typedef struct {
     uint8_t  checksum;   // 简单校验
 }__attribute__((packed))Remote_Data;//遥控器数据
 
+//油门状态
+typedef enum{
+    FREE=0,
+    MAX,
+    MIN,
+    LEAVE_MAX,
+    UNLOCK,
+}Thr_State;
+
+
 #endif

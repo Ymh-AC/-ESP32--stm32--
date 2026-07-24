@@ -11,6 +11,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_err.h"
+#include "printf_debug.h"
 
 typedef struct
 {
@@ -48,8 +49,9 @@ typedef struct
 esp_err_t bmi270_full_init(IMU_DATA *_this);
 esp_err_t bmi270_read_data(IMU_DATA *this);
 void BMI270_Get_Angle_Plus(IMU_DATA* _this);
-void BMI270_Calibrate(IMU_DATA *_this);
-void BMI270_Attitude_Calibrate(IMU_DATA *_this);
+void BMI270_Calibrate(IMU_DATA *_this);//陀螺仪零偏校准
+void BMI270_Attitude_Calibrate(IMU_DATA *_this);//加速度计水平校准
+
 /*===========不常用函数========*/
 esp_err_t BMI270_Init(void);
 esp_err_t bmi270_check_chip_id(void);

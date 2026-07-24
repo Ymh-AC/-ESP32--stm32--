@@ -1,0 +1,8 @@
+角速度和加速度需要处理   BMI270_Get_Angle_Plus
+
+gryo_y_pid.measure=IMU_Data.gyro_y; gyro_y有歧义
+
+
+绝对不要用 memmove 和 memset 去频繁操作串口缓存。这是 C 语言新手的坏习惯，在 RTOS 里这叫“用铲车挖蚂蚁”。去学习使用 FreeRTOS 的 xQueueReceive 或者 RingBuffer。
+多核分配（PinnedToCore）：你的 Start_Task 里创建了 5 个任务，但没指定跑在哪个核上！FreeRTOS 会默认在 Core 0 和 Core 1 之间来回跳来跳去。这种“漂移”对于 400Hz 的飞控是灾难。必须用 xTaskCreatePinnedToCore 把 flight_Task 焊死在 Core 1 上！
+安全第一，控制第二：在你的 LORA_Rx_Task 里，如果 res == 1（接收失败），你应该让 remote_data 结构体里的数据强制清零（尤其是油门归零、姿态回平），而不是仅仅把状态置为 REMOTE_DISCONNECT 就算了。如果不清零数据，内环 PID 还会按照最后一次的命令继续疯转。

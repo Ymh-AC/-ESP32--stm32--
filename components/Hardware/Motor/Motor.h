@@ -26,8 +26,10 @@ typedef struct
 }Motor_Struct;
 
 void Motor_Init(void);
-//最大1000，默认200
-void Set_Motor(Motor_Struct *motor);
+//最大1000，默认0
+void Set_Motor_PWM(Motor_Struct *motor);
+
+void start_Motor(Motor_Struct *motor);
 
 void Motor_test(Motor_Struct *motor);
 

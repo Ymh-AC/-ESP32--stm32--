@@ -3,12 +3,14 @@ set(src_dirs "."
 "PID"
 "Filter"
 "Receive_Data"
+"Flight"
 "FreeRTOS")
 
 set(include_dirs "." 
 "PID"
 "Filter"
 "Receive_Data"
+"Flight"
 "FreeRTOS")
 
 set(requires

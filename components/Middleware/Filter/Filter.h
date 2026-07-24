@@ -29,6 +29,7 @@ typedef struct {
     float p; // 估计误差协方差
     float k; // 卡尔曼增益
 } KalmanFilter;
+
 void KalmanFilter_Init(KalmanFilter *kf, float q,float r,float x,float p);
 float KalmanFilter_Update(KalmanFilter *kf, float measurement);
 

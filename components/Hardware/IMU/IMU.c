@@ -12,11 +12,17 @@ uint8_t acc_conf = (1 << 7) | (2 << 4) | 9;             /* ACC_CONF: 性能模�
 
 static const uint8_t REG_GYR_RANGE_DATA  = 0x00;        /*0x00 2000 ; 0x01 1000 ; 0x02 500 ; 0x03 250 ; 0x04 125 */
 uint8_t gyr_conf = (1 << 7) | (0 << 6) | (2 << 4) | 9;  /* GYR_CONF: 性能模式(bit7=1), 普通噪声(bit6=0), 普通滤波(bit5-4=2), ODR=200Hz(bit3-0=9) */
+float GYR_RANGE_DATA=16.384;
+
 
 uint8_t REG_PWR_CONF_DATA=0x00;                         /*关闭高级省电，关闭 FIFO 自唤醒功能，关闭快速上电*/
 
-static float bmi270_gyroScale=0.0174533f /16.4;         // 角速度量程缩放因子
-static float bmi270_accelScale=1.f/4096;                // 加速度计量程缩放因子(16g/65536)
+float bmi270_gyroScale=0.0174533f /16.4;         // 角速度量程缩放因子
+float bmi270_accelScale=1.f/4096;                // 加速度计量程缩放因子(16g/65536)
+
+
+
+const float bmi270_dt = 0.004f; // 采样周期，单位秒(250Hz)
 
 /*===============不可改参数================*/
 static const uint8_t BMI270_I2C_ADDR = 0x69;
@@ -42,7 +48,7 @@ static float roll_offset  = 0.0f;
 static float pitch_offset = 0.0f;
 
 static uint8_t imu_cali_finish = 0;
-#define ATT_CALI_SAMPLE_CNT  50
+#define ATT_CALI_SAMPLE_CNT  200
 
 static esp_err_t i2c_write_byte(uint8_t reg, uint8_t data){
     uint8_t buf[2]={reg,data};
@@ -168,7 +174,7 @@ esp_err_t bmi270_full_init(IMU_DATA *_this)
 	_this->q3 = 0.0f;
     ret = BMI270_Init();
     if (ret != ESP_OK) {
-        printf("I2C driver installation failed! Error: 0x%x\n", ret);
+        debug_printf("I2C driver installation failed! Error: 0x%x\n", ret);
         return ret;
     }
     vTaskDelay(pdMS_TO_TICKS(10));
@@ -181,38 +187,30 @@ esp_err_t bmi270_full_init(IMU_DATA *_this)
 
     ret = BMI270_Acc_config();
     if (ret != ESP_OK) {
-        printf("Accelerometer configuration failed!\n");
+        debug_printf("Accelerometer configuration failed!\n");
         return ret;
     }
 
     ret = BMI270_Gyr_config();
     if (ret != ESP_OK) {
-        printf("Gyroscope configuration failed!\n");
+        debug_printf("Gyroscope configuration failed!\n");
         return ret;
     }
 
     ret = bmi270_enable_sensors();
     if (ret != ESP_OK) {
-        printf("Failed to enable sensors!\n");
+        debug_printf("Failed to enable sensors!\n");
         return ret;
     }
     return ret;
 }
 
-const float bmi270_dt = 0.005f;
 #define ICM20602_INTEGRAL_LIMIT  0.5f
 // 快速平方根倒数算法
 static inline float invSqrt(float x) {
-    union {
-        float f;
-        long i;
-    } u;
-    float halfx = 0.5f * x;
-    u.f = x;
-    u.i = 0x5f3759df - (u.i >> 1);
-    u.f = u.f * (1.5f - (halfx * u.f * u.f));  // 一次牛顿迭代
-    return u.f;
+    return 1.0f / sqrtf(x);
 }
+
 static float constrain(float value, float min_val, float max_val) {
     if (value < min_val) return min_val;
     else if (value > max_val) return max_val;
@@ -229,13 +227,11 @@ void BMI270_Attitude_Calibrate(IMU_DATA *_this)
         BMI270_Get_Angle_Plus(_this);
         sum_roll  += _this->roll;
         sum_pitch += _this->pitch;
-        vTaskDelay(pdMS_TO_TICKS(20));
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
-
     roll_offset  = sum_roll / ATT_CALI_SAMPLE_CNT;
     pitch_offset = sum_pitch / ATT_CALI_SAMPLE_CNT;
     imu_cali_finish = 1;
-
 }
 // void BMI270_Attitude_Calibrate(IMU_DATA *_this)
 // {
@@ -253,7 +249,8 @@ void BMI270_Get_Angle_Plus(IMU_DATA* _this) {
 
     // 读取原始数据
     bmi270_read_data(_this);
-     
+
+    //后续加上卡尔曼滤波
     // 转换为物理量
     float ax = (float)_this->acc_x * bmi270_accelScale;
     float ay = (float)_this->acc_y * bmi270_accelScale;
@@ -329,7 +326,7 @@ void BMI270_Get_Angle_Plus(IMU_DATA* _this) {
     _this->pitch       = asinf(2.0f * (_this->q0 * _this->q2 - _this->q3 * _this->q1)) * 57.29578f;
     float current_yaw = atan2f(2.0f * (_this->q0 * _this->q3 + _this->q1 * _this->q2), 1.0f - 2.0f * (_this->q2 * _this->q2 + _this->q3 * _this->q3)) * 57.29578f;
 	// 减去初始倾斜偏移
-    _this->roll  -= roll_offset;
+    _this->roll  -= roll_offset;    
     _this->pitch -= pitch_offset;
 
     //_this->yaw = current_yaw;
@@ -358,16 +355,16 @@ void BMI270_Get_Angle_Plus(IMU_DATA* _this) {
 
 void BMI270_Calibrate(IMU_DATA *_this) {
     long sum_x = 0, sum_y = 0, sum_z = 0;
-    printf("Calibrating Gyro, please DO NOT move...\n");
+    debug_printf("Calibrating Gyro, please DO NOT move...\n");
     for (int i = 0; i < 500; i++) {
         bmi270_read_data(_this);
         sum_x += _this->gyro_x;
         sum_y += _this->gyro_y;
         sum_z += _this->gyro_z;
-        vTaskDelay(pdMS_TO_TICKS(2)); 
+        vTaskDelay(pdMS_TO_TICKS(5)); 
     }
     gyro_offset_x = sum_x / 500;
     gyro_offset_y = sum_y / 500;
     gyro_offset_z = sum_z / 500;
-    printf("Gyro Offsets: X:%d, Y:%d, Z:%d\n", gyro_offset_x, gyro_offset_y, gyro_offset_z);
+    //printf("Gyro Offsets: X:%d, Y:%d, Z:%d\n", gyro_offset_x, gyro_offset_y, gyro_offset_z);
 }

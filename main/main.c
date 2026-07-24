@@ -34,9 +34,12 @@ GPS_t gps_data;
 // 滤波器
 pt2Filter_t gyro_filter_pitch;
 pt2Filter_t gyro_filter_roll;
+
+TaskHandle_t xPowerTaskHandle = NULL;
+
 // 飞控主循环频率定义
-const float DT = 0.01f;     // 10ms = 100Hz
-const int LOOP_HZ = 200;
+extern const float flight_dt;     // 4ms = 250Hz
+extern int flight_LOOP_HZ;
 
 void app_main(void)
 {
@@ -53,17 +56,28 @@ void app_main(void)
     }
     // 1. 陀螺仪零偏校准
     BMI270_Calibrate(&IMU_Data);
-    vTaskDelay(pdMS_TO_TICKS(500));
+    for(int i = 0; i < 750; i++) // 750 * 4ms = 3.0s
+    {
+        BMI270_Get_Angle_Plus(&IMU_Data); // 以正确的 4ms dt 持续解算
+        vTaskDelay(pdMS_TO_TICKS(4));     // 严格保持 250Hz 的物理时序
+    }
     // 2. 姿态倾斜零点校准（解决机身不平）
     BMI270_Attitude_Calibrate(&IMU_Data);
 
-    pt2FilterInit(&gyro_filter_pitch, 20.0f, LOOP_HZ);
-    pt2FilterInit(&gyro_filter_roll,  20.0f, LOOP_HZ);
-    
-    Start_Task();
-    
+    pt2FilterInit(&gyro_filter_pitch, 20.0f, flight_LOOP_HZ);
+    pt2FilterInit(&gyro_filter_roll,  20.0f, flight_LOOP_HZ);
     while(1){
-        
+        //创建电源任务
+        //xTaskCreate(power_Task,"power_Task",1024,NULL,5,&xPowerTaskHandle);
+        //创建飞行任务
+        xTaskCreate(flight_Task,"flight_Task",2048,NULL,5,NULL);
+        //创建LED任务
+        xTaskCreate(led_Task,"led_Task",1024,NULL,2,NULL);
+        //创捷通信任务
+        xTaskCreate(LORA_Rx_Task,"LORA_Rx_Task",2048,NULL,6,NULL);
+        //创建按键任务
+        //xTaskCreate(Key_Task,"Key_Task",1024,NULL,2,NULL);
+        vTaskDelay(portMAX_DELAY);
     }
 }
 

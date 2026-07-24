@@ -64,14 +64,15 @@ void Set_Motor_PWM(Motor_Struct *motor)
     {
         motor->duty = 1000;
     }
-    else if(motor->duty < 200)
+    else if(motor->duty < 0)
     {
-        motor->duty = 200;
+        motor->duty = 0;
     }
-    motor->duty=(MOTOR_MAX_PWM-MOTOR_MIN_PWM)*(motor->duty-200)/800+MOTOR_MIN_PWM;
+    motor->duty=(MOTOR_MAX_PWM-MOTOR_MIN_PWM)*(motor->duty-600)/400+MOTOR_MIN_PWM;
     ledc_set_duty(LEDC_LOW_SPEED_MODE, motor->channel,motor->duty); 
     
 }
+
 void start_Motor(Motor_Struct *motor)
 {
     ledc_update_duty(LEDC_LOW_SPEED_MODE, motor->channel);

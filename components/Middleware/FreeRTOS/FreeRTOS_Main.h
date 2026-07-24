@@ -6,8 +6,8 @@
 #include "driver/ledc.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include"Servo.h"
-#include"Motor.h"
+#include "Servo.h"
+#include "Motor.h"
 #include "filter.h"
 #include "DXLora.h"
 #include "IMU.h"
@@ -16,11 +16,10 @@
 #include "Key.h"
 #include "Printf_Debug.h"
 #include "Receive_Data.h"
+#include "Flight.h"
 
 
 
-
-void Start_Task(void);
 void power_Task(void *arg);
 void LORA_Rx_Task(void *arg);
 void flight_Task(void *arg);
