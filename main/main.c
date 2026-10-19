@@ -56,10 +56,13 @@ void app_main(void)
     }
     // 1. 陀螺仪零偏校准
     BMI270_Calibrate(&IMU_Data);
+
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+    const TickType_t xPeriod = pdMS_TO_TICKS(4);
     for(int i = 0; i < 750; i++) // 750 * 4ms = 3.0s
     {
         BMI270_Get_Angle_Plus(&IMU_Data); // 以正确的 4ms dt 持续解算
-        vTaskDelay(pdMS_TO_TICKS(4));     // 严格保持 250Hz 的物理时序
+        vTaskDelayUntil(&xLastWakeTime, xPeriod);    // 严格保持 250Hz 的物理时序
     }
     // 2. 姿态倾斜零点校准（解决机身不平）
     BMI270_Attitude_Calibrate(&IMU_Data);

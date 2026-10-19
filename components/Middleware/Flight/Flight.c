@@ -47,6 +47,7 @@ void flight_pid_process(void){
     //外环测量值
     gryo_y_pid.measure = (IMU_Data.gyro_y - gyro_offset_y) / GYR_RANGE_DATA;
     //gryo_y_pid.measure = (IMU_Data.gyro_y) / GYR_RANGE_DATA;
+    
     //2，进行PID的计算
     PID_Calc_Chain(&pitch_pid,&gryo_y_pid);
     //debug_printf(":%.2f,%.2f\r\n", pitch_pid.err,gryo_y_pid.output);
@@ -73,19 +74,15 @@ void flight_control_motor(void){
     case NORMAL:
         //俯仰角向前飞 => 负误差 => 需要向后的反馈 => 前两个电机快
         //前面两个电机 减去 负误差
-        // left_top_motor.duty     =remote_data.thr - gryo_y_pid.output;
-        // left_bottom_motor.duty  =remote_data.thr + gryo_y_pid.output;
-        // right_top_motor.duty    =remote_data.thr - gryo_y_pid.output;
-        // right_bottom_motor.duty =remote_data.thr + gryo_y_pid.output;
-        left_top_motor.duty     =remote_data.thr;
-        left_bottom_motor.duty  =remote_data.thr;
-        right_top_motor.duty    =remote_data.thr;
-        right_bottom_motor.duty =remote_data.thr;
+        left_top_motor.duty     =remote_data.thr - gryo_y_pid.output;
+        left_bottom_motor.duty  =remote_data.thr + gryo_y_pid.output;
+        right_top_motor.duty    =remote_data.thr - gryo_y_pid.output;
+        right_bottom_motor.duty =remote_data.thr + gryo_y_pid.output;
 
-        roll_left_servo.angle     =remote_data.rol- gryo_x_pid.output;
-        roll_right_servo.angle    =remote_data.rol+ gryo_x_pid.output;
-        pitch_left_servo.angle    =remote_data.pit+ gryo_y_pid.output;
-        pitch_right_servo.angle   =remote_data.pit+ gryo_y_pid.output;
+        roll_left_servo.angle     =90- gryo_x_pid.output;
+        roll_right_servo.angle    =90+ gryo_x_pid.output;
+        pitch_left_servo.angle    =90+ gryo_y_pid.output;
+        pitch_right_servo.angle   =90+ gryo_y_pid.output;
 
         break;
     case FIX_HEIGHT:
